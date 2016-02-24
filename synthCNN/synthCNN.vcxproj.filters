@@ -1,14 +1,51 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="mLibSource.cpp" />
-    <ClCompile Include="vizzer.cpp" />
+    <ClCompile Include="main.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="mLibSource.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="vizzer.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\modelDatabase.cpp">
+      <Filter>databases</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\scene.cpp">
+      <Filter>databases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="appState.h" />
-    <ClInclude Include="main.h" />
-    <ClInclude Include="mLibInclude.h" />
-    <ClInclude Include="vizzer.h" />
+    <ClInclude Include="appState.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="mLibInclude.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="vizzer.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\modelDatabase.h">
+      <Filter>databases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\constants.h">
+      <Filter>databases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\scene.h">
+      <Filter>databases</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="core">
+      <UniqueIdentifier>{e2bd1d1b-f86c-4480-83d1-3568958eea55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="databases">
+      <UniqueIdentifier>{4589d5d0-6688-4d91-bfae-4369fdd4d8b6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

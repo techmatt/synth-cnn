@@ -16,9 +16,6 @@ private:
 
     AppState state;
 
-    D3D11AssetRenderer assets;
-    Cameraf camera;
-
     D3D11Font font;
     FrameTimer timer;
 };

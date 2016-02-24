@@ -3,24 +3,35 @@
 
 void Vizzer::init(ApplicationData &app)
 {
-    assets.init(app.graphics);
+    state.graphics = &app.graphics.castD3D11();
+    state.assets.init(app.graphics);
 
     vec3f eye(0.5f, 0.2f, 0.5f);
-    vec3f worldUp(0.0f, 1.0f, 0.0f);
-    camera = Cameraf(-eye, eye, worldUp, 60.0f, (float)app.window.getWidth() / app.window.getHeight(), 0.01f, 10000.0f);
-    camera = Cameraf("-0.774448 1.24485 -1.35404 0.999848 1.80444e-009 -0.0174517 0.0152652 -0.484706 0.874544 -0.00845866 -0.874677 -0.484632 0 1 0 60 1.25 0.01 10000");
+    vec3f worldUp(0.0f, 0.0f, 1.0f);
+    state.camera = Cameraf(-eye, eye, worldUp, 60.0f, (float)app.window.getWidth() / app.window.getHeight(), 0.01f, 10000.0f);
+    state.camera = Cameraf("14.8408 15.786 14.2102 -0.754726 0.656041 6.95734e-010 -0.523082 -0.601766 -0.603542 -0.395948 -0.455509 0.797331 0 0 1 60 1.25 0.01 10000");
     //-0.774448 1.24485 -1.35404 0.999848 1.80444e-009 -0.0174517 0.0152652 -0.484706 0.874544 -0.00845866 -0.874677 -0.484632 0 1 0 60 1.25 0.01 10000
     font.init(app.graphics, "Calibri");
 
+    state.modelDatabase.init();
+
+    state.activeScene = state.generator.makeRandomScene(state);
 }
 
 void Vizzer::render(ApplicationData &app)
 {
     timer.frame();
 
+    state.activeScene.render(state);
+
+    //state.assets.renderSphere(state.camera.getCameraPerspective(), vec3f::origin, 0.5f, vec3f(1.0f, 1.0f, 1.0f));
+
     vector<string> text;
     text.push_back(string("FPS: ") + convert::toString(timer.framesPerSecond()));
     
+    //if (rand() % 100)
+    //    cout << state.camera.toString() << endl;
+
     const bool useText = true;
     if (useText)
         drawText(app, text);
@@ -28,7 +39,7 @@ void Vizzer::render(ApplicationData &app)
 
 void Vizzer::resize(ApplicationData &app)
 {
-    camera.updateAspectRatio((float)app.window.getWidth() / app.window.getHeight());
+    state.camera.updateAspectRatio((float)app.window.getWidth() / app.window.getHeight());
 }
 
 void Vizzer::drawText(ApplicationData &app, vector<string> &text)
@@ -43,6 +54,11 @@ void Vizzer::drawText(ApplicationData &app, vector<string> &text)
 void Vizzer::keyDown(ApplicationData &app, UINT key)
 {
     if (key == KEY_F) app.graphics.castD3D11().toggleWireframe();
+
+    if (key == KEY_R)
+    {
+        state.activeScene = state.generator.makeRandomScene(state);
+    }
 }
 
 void Vizzer::keyPressed(ApplicationData &app, UINT key)
@@ -52,17 +68,17 @@ void Vizzer::keyPressed(ApplicationData &app, UINT key)
 
     //if (key == KEY_Z) physicsWorld.step();
 
-    if(key == KEY_S) camera.move(-distance);
-    if(key == KEY_W) camera.move(distance);
-    if(key == KEY_A) camera.strafe(-distance);
-    if(key == KEY_D) camera.strafe(distance);
-	if(key == KEY_E) camera.jump(distance);
-	if(key == KEY_Q) camera.jump(-distance);
+    if(key == KEY_S) state.camera.move(-distance);
+    if(key == KEY_W) state.camera.move(distance);
+    if(key == KEY_A) state.camera.strafe(-distance);
+    if(key == KEY_D) state.camera.strafe(distance);
+	if(key == KEY_E) state.camera.jump(distance);
+	if(key == KEY_Q) state.camera.jump(-distance);
 
-    if(key == KEY_UP) camera.lookUp(-theta);
-    if(key == KEY_DOWN) camera.lookUp(theta);
-    if(key == KEY_LEFT) camera.lookRight(-theta);
-    if(key == KEY_RIGHT) camera.lookRight(theta);
+    if(key == KEY_UP) state.camera.lookUp(-theta);
+    if(key == KEY_DOWN) state.camera.lookUp(theta);
+    if(key == KEY_LEFT) state.camera.lookRight(-theta);
+    if(key == KEY_RIGHT) state.camera.lookRight(theta);
 }
 
 void Vizzer::mouseDown(ApplicationData &app, MouseButtonType button)
@@ -73,7 +89,7 @@ void Vizzer::mouseDown(ApplicationData &app, MouseButtonType button)
 void Vizzer::mouseWheel(ApplicationData &app, int wheelDelta)
 {
     const float distance = 0.001f;
-    camera.move(distance * wheelDelta);
+    state.camera.move(distance * wheelDelta);
 }
 
 void Vizzer::mouseMove(ApplicationData &app)
@@ -85,14 +101,14 @@ void Vizzer::mouseMove(ApplicationData &app)
 
     if(app.input.mouse.buttons[MouseButtonRight])
     {
-        camera.strafe(distance * posDelta.x);
-        camera.jump(-distance * posDelta.y);
+        state.camera.strafe(distance * posDelta.x);
+        state.camera.jump(-distance * posDelta.y);
     }
 
     if(app.input.mouse.buttons[MouseButtonLeft])
     {
-        camera.lookRight(theta * posDelta.x);
-        camera.lookUp(theta * posDelta.y);
+        state.camera.lookRight(-theta * posDelta.x);
+        state.camera.lookUp(theta * posDelta.y);
     }
 
 }

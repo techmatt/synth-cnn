@@ -1,7 +1,11 @@
 ﻿
-#include <intrin.h>
-
 #include "mLibInclude.h"
+
+struct AppState;
+
+#include "../common/constants.h"
+#include "../common/modelDatabase.h"
+#include "../common/scene.h"
 
 #include "appState.h"
 

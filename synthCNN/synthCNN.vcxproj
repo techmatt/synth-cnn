@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
@@ -19,14 +23,29 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <LibraryPath>$(ProjectDir)\..\..\mLibExternal\libsWindows\lib64;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x64;D:\Code\opencv3_1\build\x64\vc12\lib;D:\Code\opencv3_1\output\lib\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include;D:\Code\opencv3_1\build\include;D:\Code\opencv3_1\opencv_contrib\modules\xfeatures2d\include;./;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <LibraryPath>$(ProjectDir)\..\..\mLibExternal\libsWindows\lib64;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x64;D:\Code\opencv3_1\build\x64\vc12\lib;D:\Code\opencv3_1\output\lib\Release;$(LibraryPath)</LibraryPath>
     <IncludePath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include;D:\Code\opencv3_1\build\include;D:\Code\opencv3_1\opencv_contrib\modules\xfeatures2d\include;./;$(IncludePath)</IncludePath>
@@ -54,12 +73,40 @@
       <AdditionalDependencies>opencv_world310.lib;opencv_xfeatures2d310.lib;D3DCompiler.lib;FW1FontWrapper.lib;d3d11.lib;d3dx11.lib;libglog_static.lib;ceres.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\mLib\include\;$(ProjectDir)\..\..\mLibExternal/libsWindows/ceres-windows\ceres-solver\include\;$(ProjectDir)\..\..\mLibExternal/libsWindows/ceres-windows\glog\src\windows;$(ProjectDir)\..\..\mLibExternal/libsWindows/ceres-windows\win\include;$(ProjectDir)\..\..\mLibExternal/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <OpenMPSupport>true</OpenMPSupport>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>opencv_world310.lib;opencv_xfeatures2d310.lib;D3DCompiler.lib;FW1FontWrapper.lib;d3d11.lib;d3dx11.lib;libglog_static.lib;ceres.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\modelDatabase.cpp" />
+    <ClCompile Include="..\common\scene.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mLibSource.cpp" />
     <ClCompile Include="vizzer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\constants.h" />
+    <ClInclude Include="..\common\modelDatabase.h" />
+    <ClInclude Include="..\common\scene.h" />
     <ClInclude Include="appState.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="mLibInclude.h" />
