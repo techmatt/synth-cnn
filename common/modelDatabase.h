@@ -35,6 +35,8 @@ struct ModelCategory
 
     map<string, ModelData*> models;
     vector<ModelData*> modelList;
+
+    set<string> dirList;
 };
 
 struct ModelDatabase

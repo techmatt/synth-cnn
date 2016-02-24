@@ -48,9 +48,9 @@ Scene SceneGenerator::makeRandomScene(AppState &state)
 {
     Scene result;
 
-    result.addArchitecture(state, "floor", 10.0f);
-    result.addArchitecture(state, "wallA", 10.0f);
-    result.addArchitecture(state, "wallB", 10.0f);
+    result.addArchitecture(state, "floor", 5.0f);
+    result.addArchitecture(state, "wallA", 5.0f);
+    result.addArchitecture(state, "wallB", 5.0f);
 
     result.addRandomModel(state, util::randomUniform(0.5f, 1.5f));
 

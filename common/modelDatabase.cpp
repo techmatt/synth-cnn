@@ -36,6 +36,17 @@ void ModelData::loadModel(GraphicsDevice &graphics) const
     {
         TriMeshf triMesh(m.value.first);
         triMesh.setColor(vec4f(1.0f, 1.0f, 1.0f, 1.0f));
+        triMesh.computeNormals();
+
+        for (auto &v : triMesh.getVertices())
+        {
+            float s = 0.0f;
+            s = max(s, abs(v.normal | vec3f(1.0f, 0.0f, 0.0f)));
+            s = max(s, abs(v.normal | vec3f(0.0f, 1.0f, 0.0f)));
+            s = max(s, abs(v.normal | vec3f(0.0f, 0.0f, 1.0f)));
+            s = max(s, abs(v.normal | vec3f(1.0f, 1.0f, 1.0f).getNormalized()));
+            v.color = vec4f(s, s, s, 1.0f);
+        }
 
         meshes[m.index].mesh = D3D11TriMesh(graphics, triMesh);
         meshes[m.index].box = triMesh.computeBoundingBox();
@@ -48,13 +59,20 @@ void ModelCategory::addCSVModel(const string &line)
     //3dw.a4678e6798e768c3b6a66ea321171690,"02842573,04012084,02691156","biplane,propeller plane,airplane,aeroplane,plane","0.0\,0.0\,1.0","0.0\,1.0\,0.0",Old-school Yellow Biplane,
 
     const auto partsA = util::split(line, ',');
-    const string &modelName = partsA[0];
+    const string &modelName = util::remove(partsA[0], "3dw.");
+
+    const string path = constants::shapeNetRoot + name + "/" + modelName + "/model.obj";
+    //if (!util::fileExists(path))
+    if (dirList.count(modelName) == 0)
+    {
+        return;
+    }
 
     ModelData *data = new ModelData;
     models[modelName] = data;
     modelList.push_back(data);
 
-    data->path = constants::shapeNetRoot + name + "/" + util::remove(modelName, "3dw.") + "/model.obj";
+    data->path = path;
 }
 
 void ModelCategory::addArchitectureModel(const string &architectureName)
@@ -71,9 +89,14 @@ void ModelDatabase::init()
     for (const string &csvFile : Directory::enumerateFiles(constants::shapeNetRoot, ".csv"))
     {
         const string categoryName = util::removeExtensions(csvFile);
+        cout << "Loading " << categoryName << endl;
 
         ModelCategory &category = categories[categoryName];
         category.name = categoryName;
+
+        for (auto &d : Directory::enumerateDirectories(constants::shapeNetRoot + category.name))
+            category.dirList.insert(d);
+
         categoryList.push_back(categoryName);
         
         auto lines = util::getFileLines(constants::shapeNetRoot + csvFile, 3);

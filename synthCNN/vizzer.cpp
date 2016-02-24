@@ -88,7 +88,7 @@ void Vizzer::mouseDown(ApplicationData &app, MouseButtonType button)
 
 void Vizzer::mouseWheel(ApplicationData &app, int wheelDelta)
 {
-    const float distance = 0.001f;
+    const float distance = 0.002f;
     state.camera.move(distance * wheelDelta);
 }
 
