@@ -1,0 +1,5 @@
+
+struct AppState
+{
+    int selectedCamera;
+};
