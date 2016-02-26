@@ -1,0 +1,159 @@
+
+    typedef function < void() > subroutine;
+
+    auto makeImages = [&](Bitmap &colorResult, subroutine &renderFunction) {
+        renderTarget.bind();
+        renderTarget.clear(ml::vec4f(1.0f, 0.0f, 1.0f, 1.0f));
+
+        renderFunction();
+        
+        renderTarget.captureColorBuffer(colorResult);
+        
+        g.bindRenderTarget();
+    };
+
+    subroutine renderWholeScene = [&]() {
+        for (const ObjectInstance &o : s.objects)
+        {
+            state.renderer.renderObject(state.assets, g, c.getCameraPerspective(), o, vec3f(1.0f, 1.0f, 1.0f), false);
+        }
+    };
+
+    subroutine renderSceneNoArchitecture = [&]() {
+        for (UINT objectIndex = 1; objectIndex < s.objects.size(); objectIndex++)
+        {
+            state.renderer.renderObject(state.assets, g, c.getCameraPerspective(), s.objects[objectIndex], vec3f(1.0f, 1.0f, 1.0f), false);
+        }
+    };
+
+    subroutine renderObjectOnly = [&]() {
+        state.renderer.renderObject(state.assets, g, c.getCameraPerspective(), s.objects[targetObjectIndex], vec3f(1.0f, 1.0f, 1.0f), false);
+    };
+
+    makeImages(wholeSceneColor, wholeSceneDepth, renderWholeScene);
+    makeImages(objectOnlyColor, objectOnlyDepth, renderObjectOnly);
+    makeImages(sceneNoArchitectureColor, sceneNoArchitectureDepth, renderSceneNoArchitecture);
+
+    //
+    // unoccluded-only rendering
+    //
+    renderTarget.bind();
+    renderTarget.clear(vec4f(1.0f, 0.0f, 1.0f, 1.0f));
+
+    for (UINT objectIndex = 0; objectIndex < s.objects.size(); objectIndex++)
+    {
+        if (objectIndex != targetObjectIndex)
+            state.renderer.renderObject(state.assets, g, c.getCameraPerspective(), s.objects[objectIndex], vec3f(1.0f, 1.0f, 1.0f), false);
+    }
+
+    renderTarget.clearColorBuffer(vec4f(1.0f, 0.0f, 1.0f, 1.0f));
+
+    renderObjectOnly();
+
+    renderTarget.captureColorBuffer(unoccludedColor);
+
+    g.bindRenderTarget();
+
+    CNNRenderResult result;
+
+    if (!qualityEstimateOnly)
+    {
+        auto kinectNoise = [](ColorImageR32 &image) {
+            for (auto &x : image)
+            {
+                if (image.isValidValue(x.value))
+                    x.value += (float)ml::RNG::global.normal(0.0, x.value / 100.0);
+            }
+        };
+
+        //ml::FreeImageWrapper::saveImage(R"(C:\code\A.png)", ml::ColorImageRGB(ml::DepthImage(wholeSceneDepth)));
+
+        kinectNoise(wholeSceneDepth);
+        kinectNoise(objectOnlyDepth);
+
+        //ml::FreeImageWrapper::saveImage(R"(C:\code\B.png)", wholeSceneDepth);
+
+        result.images.push_back(RenderedImage(VirtualImage(wholeSceneColor), "scene-color"));
+        result.images.push_back(RenderedImage(VirtualImage(wholeSceneDepth), "scene-depth"));
+        result.images.push_back(RenderedImage(VirtualImage(objectOnlyColor), "object-color"));
+        result.images.push_back(RenderedImage(VirtualImage(objectOnlyDepth), "object-depth"));
+        result.images.push_back(RenderedImage(VirtualImage(unoccludedColor), "visible-color"));
+        result.images.push_back(RenderedImage(VirtualImage(sceneNoArchitectureColor), "noarchitecture-color"));
+    }
+
+    ml::vec4uc magenta(255, 0, 255, 255);
+
+    auto countPixels = [&](const Bitmap &image)
+    {
+        size_t count = 0;
+        for (const auto &p : image)
+            if (p.value != magenta)
+                count++;
+        return count;
+    };
+
+    auto borderClear = [&](const Bitmap &image)
+    {
+        for (int y = 0; y < (int)image.getHeight(); y++)
+            if (image(y, 0) != magenta || image(y, (int)image.getWidth() - 1) != magenta)
+                return false;
+        for (int x = 0; x < (int)image.getWidth(); x++)
+            if (image(0, x) != magenta || image((int)image.getHeight() - 1, x) != magenta)
+                return false;
+        return true;
+    };
+
+    double occlusionPercentage = 0.0;
+    double totalScreenCoverage = 0.0;
+    const size_t unoccludedObjectPixels = countPixels(unoccludedColor);
+    const size_t totalObjectPixels = countPixels(objectOnlyColor);
+    double borderQuality = 0.0;
+
+    if (borderClear(objectOnlyColor))
+    {
+        borderQuality = 1.0;
+    }
+
+    result.quality = 0.0;
+
+    if (totalObjectPixels > 0)
+    {
+        occlusionPercentage = 1.0 - (double)unoccludedObjectPixels / (double)totalObjectPixels;
+        totalScreenCoverage = (double)totalObjectPixels / double(wholeSceneColor.getWidth() * wholeSceneColor.getHeight());
+
+        if (unoccludedObjectPixels >= synthParams().minTotalPixelCount &&
+            //occlusionPercentage >= 0.05 &&
+            occlusionPercentage <= synthParams().maxOcclusionPercentage &&
+            totalScreenCoverage >= synthParams().minScreenCoverage &&
+            totalScreenCoverage <= synthParams().maxScreenCoverage &&
+            borderQuality > 0.0)
+        {
+            // TODO: this is not a good metric because it favors unoccluded too much...
+            //result.quality = ml::math::max(totalScreenCoverage, 0.1);
+            result.quality = 1.0;
+        }
+    }
+
+    const ObjectInstance &object = s.objects[targetObjectIndex];
+    
+    const vec3f objectCenter = object.modelToWorld * object.object.model->bbox.getCenter();
+    const vec3f objectFrameX = (object.modelToWorld * (object.object.model->bbox.getCenter() + vec3f::eX) - objectCenter).getNormalized();
+    const vec3f objectFrameY = (object.modelToWorld * (object.object.model->bbox.getCenter() + vec3f::eY) - objectCenter).getNormalized();
+    const vec3f objectFrameZ = (object.modelToWorld * (object.object.model->bbox.getCenter() + vec3f::eZ) - objectCenter).getNormalized();
+
+    result.annotations.push_back("modelID=" + object.object.modelId);
+    result.annotations.push_back("modelCategory=" + object.object.model->categoryName);
+    result.annotations.push_back("objectCenter=" + objectCenter.toString());
+    result.annotations.push_back("objectFrameX=" + objectFrameX.toString());
+    result.annotations.push_back("objectFrameY=" + objectFrameY.toString());
+    result.annotations.push_back("objectFrameZ=" + objectFrameZ.toString());
+    result.annotations.push_back("cameraEye=" + c.getEye().toString());
+    result.annotations.push_back("cameraRight=" + c.getRight().toString());
+    result.annotations.push_back("cameraLook=" + c.getLook().toString());
+    result.annotations.push_back("unoccludedObjectPixels=" + std::to_string(unoccludedObjectPixels));
+    result.annotations.push_back("totalObjectPixels=" + std::to_string(totalObjectPixels));
+    result.annotations.push_back("occlusionPercentage=" + std::to_string(occlusionPercentage));
+    result.annotations.push_back("totalScreenCoverage=" + std::to_string(totalScreenCoverage));
+    result.annotations.push_back("borderQuality=" + std::to_string(borderQuality));
+    result.annotations.push_back("score=" + std::to_string(result.quality));
+    

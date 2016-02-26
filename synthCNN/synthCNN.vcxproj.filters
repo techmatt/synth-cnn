@@ -16,6 +16,9 @@
     <ClCompile Include="..\common\scene.cpp">
       <Filter>databases</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\synthRenderer.cpp">
+      <Filter>databases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="appState.h">
@@ -39,6 +42,9 @@
     <ClInclude Include="..\common\scene.h">
       <Filter>databases</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\synthRenderer.h">
+      <Filter>databases</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="core">
@@ -47,5 +53,8 @@
     <Filter Include="databases">
       <UniqueIdentifier>{4589d5d0-6688-4d91-bfae-4369fdd4d8b6}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="temp.txt" />
   </ItemGroup>
 </Project>

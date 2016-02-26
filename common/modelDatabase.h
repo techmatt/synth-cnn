@@ -11,6 +11,9 @@ struct ModelData
 
     mat4f normalizingTransform() const;
 
+    string modelName;
+    string categoryName;
+
     vec3f up;
     vec3f front;
 
@@ -31,7 +34,7 @@ struct ModelCategory
     void addCSVModel(const string &line);
     void addArchitectureModel(const string &filename);
 
-    string name;
+    string categoryName;
 
     map<string, ModelData*> models;
     vector<ModelData*> modelList;

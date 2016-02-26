@@ -1,7 +1,7 @@
 
 struct AppState
 {
-    D3D11AssetRenderer assets;
+    D3D11AssetRenderer renderer;
     Cameraf camera;
 
     ModelDatabase modelDatabase;
@@ -10,4 +10,9 @@ struct AppState
     SceneGenerator generator;
 
     D3D11GraphicsDevice *graphics;
+
+    SynthRenderer synthRenderer;
+    SynthRenderResult currentRendering;
+
+    bool autoGenerateMode;
 };

@@ -9,6 +9,8 @@ struct ModelInstance
         }
     }
 
+    void render(AppState &state, const Cameraf &camera) const;
+
     const ModelData *model;
     mat4f transform;
 
@@ -16,6 +18,8 @@ struct ModelInstance
     float scale;
 
     vec3f debugColor;
+
+    OBB3f worldBBox;
 };
 
 struct Scene
@@ -24,10 +28,12 @@ struct Scene
     
     void addRandomModel(AppState &state, float scale);
 
-    void render(AppState &state);
+    void render(AppState &state, const Cameraf &camera) const;
 
-    vector<ModelInstance> models;
-    int centeralModelIndex;
+    void saveMitsuba(const string &filename, const Cameraf &camera) const;
+
+    vector<ModelInstance> objects;
+    int mainObjectIndex;
 };
 
 struct SceneGenerator

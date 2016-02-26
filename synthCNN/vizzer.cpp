@@ -4,7 +4,7 @@
 void Vizzer::init(ApplicationData &app)
 {
     state.graphics = &app.graphics.castD3D11();
-    state.assets.init(app.graphics);
+    state.renderer.init(app.graphics);
 
     vec3f eye(0.5f, 0.2f, 0.5f);
     vec3f worldUp(0.0f, 0.0f, 1.0f);
@@ -12,6 +12,8 @@ void Vizzer::init(ApplicationData &app)
     state.camera = Cameraf("14.8408 15.786 14.2102 -0.754726 0.656041 6.95734e-010 -0.523082 -0.601766 -0.603542 -0.395948 -0.455509 0.797331 0 0 1 60 1.25 0.01 10000");
     //-0.774448 1.24485 -1.35404 0.999848 1.80444e-009 -0.0174517 0.0152652 -0.484706 0.874544 -0.00845866 -0.874677 -0.484632 0 1 0 60 1.25 0.01 10000
     font.init(app.graphics, "Calibri");
+
+    state.synthRenderer.init(*state.graphics, 256, 256);
 
     state.modelDatabase.init();
 
@@ -22,13 +24,21 @@ void Vizzer::render(ApplicationData &app)
 {
     timer.frame();
 
-    state.activeScene.render(state);
+    state.activeScene.render(state, state.camera);
 
     //state.assets.renderSphere(state.camera.getCameraPerspective(), vec3f::origin, 0.5f, vec3f(1.0f, 1.0f, 1.0f));
 
     vector<string> text;
     text.push_back(string("FPS: ") + convert::toString(timer.framesPerSecond()));
+
+    auto &centralModel = *state.activeScene.objects[state.activeScene.mainObjectIndex].model;
+    text.push_back(string("Category: ") + centralModel.categoryName);
+    text.push_back(string("Model: ") + centralModel.modelName);
+    text.push_back(string("Up: ") + centralModel.up.toString());
     
+    for (const string &s : state.currentRendering.annotations)
+        text.push_back(s);
+
     //if (rand() % 100)
     //    cout << state.camera.toString() << endl;
 
@@ -58,6 +68,16 @@ void Vizzer::keyDown(ApplicationData &app, UINT key)
     if (key == KEY_R)
     {
         state.activeScene = state.generator.makeRandomScene(state);
+    }
+
+    if (key == KEY_T)
+    {
+        const Cameraf randomCamera = state.synthRenderer.randomCamera(state.activeScene);
+        state.currentRendering = state.synthRenderer.render(state, state.activeScene, randomCamera, false);
+        state.camera = randomCamera;
+        LodePNG::save(state.currentRendering.occludedObjectColor, constants::synthCNNRoot + "occluded.png");
+
+        state.activeScene.saveMitsuba(constants::synthCNNRoot + "debugScene.xml", state.camera);
     }
 }
 
