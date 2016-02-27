@@ -5,5 +5,7 @@ namespace constants
     const string shapeNetRoot = R"(D:\datasets\ShapeNet\ShapeNetCore.v1\)";
     const string architecturePath = R"(C:\Code\synth-cnn\data\architecture\)";
 
-    const float fieldOfView = 60.0f;
+    const string randomImagePath = R"(D:\datasets\IndoorCVPR\)";
+
+    const float fieldOfView = 44.5513f;
 }

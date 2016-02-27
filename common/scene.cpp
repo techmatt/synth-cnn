@@ -54,6 +54,8 @@ void Scene::render(AppState &state, const Cameraf &camera) const
 
 void Scene::saveMitsuba(const string &filename, const Cameraf &camera) const
 {
+    auto r = [](float min, float max) { return util::randomUniform(min, max); };
+
     auto baseLines = util::getFileLines(constants::synthCNNRoot + "data/mitsubaTemplate.txt");
     const auto shapeLines = util::getFileLines(constants::synthCNNRoot + "data/shapeTemplate.txt");
     
@@ -66,7 +68,7 @@ void Scene::saveMitsuba(const string &filename, const Cameraf &camera) const
         }
     };
 
-    replaceAll(baseLines, "#LOOKAT#", camera.getLook().toString(", "));
+    replaceAll(baseLines, "#LOOKAT#", (camera.getEye() + camera.getLook()).toString(", "));
     replaceAll(baseLines, "#ORIGIN#", camera.getEye().toString(", "));
     
     for (auto &instance : iterate(objects))
@@ -75,29 +77,32 @@ void Scene::saveMitsuba(const string &filename, const Cameraf &camera) const
         const string objDir = constants::synthCNNRoot + "meshes/" + model.categoryName + "/";
         util::makeDirectory(objDir);
 
-        for (int flip = 0; flip <= 0; flip++)
+        const vec3f reflectance(r(0.1f, 0.9f), r(0.1f, 0.9f), r(0.1f, 0.9f));
+
+        for (auto &m : iterate(model.meshes))
         {
-            const string flipStr = flip ? "true" : "false";
-            for (auto &m : iterate(model.meshes))
+            const string &objFilename = objDir + model.modelName + "_" + to_string(m.index) + ".obj";
+            if (!util::fileExists(objFilename))
             {
-                const string &objFilename = objDir + model.modelName + "_" + to_string(m.index) + ".obj";
-                if (!util::fileExists(objFilename))
-                {
-                    auto meshData = m.value.mesh.getTriMesh().getMeshData();
-                    meshData.clearAttributes();
+                auto meshData = m.value.mesh.getTriMesh().getMeshData();
+                meshData.clearAttributes();
+
+                if (meshData.m_FaceIndicesVertices.size() == 0)
+                    continue;
                     
-                    MeshIOf::saveToOBJ(objFilename, meshData);
-                }
-                auto localShapeLines = shapeLines;
-                replaceAll(localShapeLines, "#FILENAME#", objFilename);
-                replaceAll(localShapeLines, "#MATRIX#", instance.value.transform.toString(", "));
-                replaceAll(localShapeLines, "#ID#", "o" + to_string(instance.index) + "_m" + to_string(m.index) + "_f" + flipStr);
-                replaceAll(localShapeLines, "#FLIP#", flipStr);
-                
-                for (auto &s : localShapeLines)
-                {
-                    baseLines.push_back(s);
-                }
+                MeshIOf::saveToOBJ(objFilename, meshData);
+            }
+
+            auto localShapeLines = shapeLines;
+            replaceAll(localShapeLines, "#FILENAME#", objFilename);
+            replaceAll(localShapeLines, "#MATRIX#", instance.value.transform.toString(", "));
+            replaceAll(localShapeLines, "#ID#", "o" + to_string(instance.index) + "_m" + to_string(m.index));
+            replaceAll(localShapeLines, "#FLIP#", "false");
+            replaceAll(localShapeLines, "#REFLECTANCE#", reflectance.toString(", "));
+
+            for (auto &s : localShapeLines)
+            {
+                baseLines.push_back(s);
             }
         }
     }

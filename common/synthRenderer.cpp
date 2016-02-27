@@ -35,7 +35,7 @@ Cameraf SynthRenderer::randomCamera(const Scene &s)
 bool SynthRenderer::goodRandomCamera(AppState &state, const Scene &s, Cameraf &bestCamera)
 {
     double bestCameraQuality = 0.0;
-    for (UINT i = 0; i < 100; i++)
+    for (UINT i = 0; i < 200; i++)
     {
         const Cameraf c = randomCamera(s);
         auto result = render(state, s, c, true);

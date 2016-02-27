@@ -64,13 +64,15 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <OpenMPSupport>true</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>main.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>opencv_world310.lib;opencv_xfeatures2d310.lib;D3DCompiler.lib;FW1FontWrapper.lib;d3d11.lib;d3dx11.lib;libglog_static.lib;ceres.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freeimage.lib;D3DCompiler.lib;FW1FontWrapper.lib;d3d11.lib;d3dx11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -87,28 +89,37 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <OpenMPSupport>true</OpenMPSupport>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>main.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>opencv_world310.lib;opencv_xfeatures2d310.lib;D3DCompiler.lib;FW1FontWrapper.lib;d3d11.lib;d3dx11.lib;libglog_static.lib;ceres.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freeimage.lib;D3DCompiler.lib;FW1FontWrapper.lib;d3d11.lib;d3dx11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\materialDatabase.cpp" />
     <ClCompile Include="..\common\modelDatabase.cpp" />
     <ClCompile Include="..\common\scene.cpp" />
     <ClCompile Include="..\common\synthRenderer.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="..\common\synthUtil.cpp" />
+    <ClCompile Include="main.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="mLibSource.cpp" />
     <ClCompile Include="vizzer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\constants.h" />
+    <ClInclude Include="..\common\materialDatabase.h" />
     <ClInclude Include="..\common\modelDatabase.h" />
     <ClInclude Include="..\common\scene.h" />
     <ClInclude Include="..\common\synthRenderer.h" />
+    <ClInclude Include="..\common\synthUtil.h" />
     <ClInclude Include="appState.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="mLibInclude.h" />

@@ -13,11 +13,17 @@ void Vizzer::init(ApplicationData &app)
     //-0.774448 1.24485 -1.35404 0.999848 1.80444e-009 -0.0174517 0.0152652 -0.484706 0.874544 -0.00845866 -0.874677 -0.484632 0 1 0 60 1.25 0.01 10000
     font.init(app.graphics, "Calibri");
 
-    state.synthRenderer.init(*state.graphics, 256, 256);
+    state.synthRenderer.init(*state.graphics, 256, 1024);
 
     state.modelDatabase.init();
 
     state.activeScene = state.generator.makeRandomScene(state);
+    
+    state.randomImageLoader.init();
+
+    state.materialDatabase.init();
+
+    state.autoGenerateMode = false;
 }
 
 void Vizzer::render(ApplicationData &app)
@@ -41,6 +47,9 @@ void Vizzer::render(ApplicationData &app)
 
     //if (rand() % 100)
     //    cout << state.camera.toString() << endl;
+
+    if (state.autoGenerateMode)
+        runNewMistubaScene(app);
 
     const bool useText = true;
     if (useText)
@@ -75,10 +84,65 @@ void Vizzer::keyDown(ApplicationData &app, UINT key)
         const Cameraf randomCamera = state.synthRenderer.randomCamera(state.activeScene);
         state.currentRendering = state.synthRenderer.render(state, state.activeScene, randomCamera, false);
         state.camera = randomCamera;
+    }
+
+    if (key == KEY_G)
+    {
         LodePNG::save(state.currentRendering.occludedObjectColor, constants::synthCNNRoot + "occluded.png");
 
+        auto mask = synthUtil::makeDownsampledMask(state.currentRendering.occludedObjectColor, 4);
+        LodePNG::save(mask, constants::synthCNNRoot + "mask.png");
+
         state.activeScene.saveMitsuba(constants::synthCNNRoot + "debugScene.xml", state.camera);
+
+        synthUtil::runMitsuba(constants::synthCNNRoot + "debugScene.xml");
+
+        const ColorImageR8G8B8A8 renderedImage = LodePNG::load(constants::synthCNNRoot + "debugScene.png");
+
+        const ColorImageR8G8B8A8 compositedImage = synthUtil::compositeRandomImage(state, renderedImage, mask);
+        LodePNG::save(compositedImage, constants::synthCNNRoot + "composite.png");
     }
+
+    if (key == KEY_P)
+    {
+        state.autoGenerateMode = !state.autoGenerateMode;
+    }
+}
+
+void Vizzer::runNewMistubaScene(ApplicationData &app)
+{
+    state.activeScene = state.generator.makeRandomScene(state);
+
+    if (!state.synthRenderer.goodRandomCamera(state, state.activeScene, state.camera))
+    {
+        cout << "No good camera found" << endl;
+        return;
+    }
+
+    auto &object = state.activeScene.objects[state.activeScene.mainObjectIndex];
+    const string categoryDir = constants::synthCNNRoot + "mitsubaScenes/" + object.model->categoryName + "/";
+    util::makeDirectory(categoryDir);
+
+    const UINT randomInt32 = util::randomInteger(0, std::numeric_limits<long>::max());
+    const string randomHash = util::encodeBytes(randomInt32);
+
+    const string scenePrefix = categoryDir + object.model->modelName + "_" + randomHash;
+
+    state.currentRendering = state.synthRenderer.render(state, state.activeScene, state.camera, false);
+
+    //LodePNG::save(state.currentRendering.occludedObjectColor, constants::synthCNNRoot + "occluded.png");
+
+    auto mask = synthUtil::makeDownsampledMask(state.currentRendering.occludedObjectColor, 4);
+    LodePNG::save(mask, scenePrefix + "_mask.png");
+
+    state.activeScene.saveMitsuba(scenePrefix + ".xml", state.camera);
+
+    synthUtil::runMitsuba(scenePrefix + ".xml");
+
+    const ColorImageR8G8B8A8 renderedImage = LodePNG::load(scenePrefix + ".png");
+
+    const ColorImageR8G8B8A8 compositedImage = synthUtil::compositeRandomImage(state, renderedImage, mask);
+    LodePNG::save(compositedImage, scenePrefix + "_comp.png");
 }
 
 void Vizzer::keyPressed(ApplicationData &app, UINT key)

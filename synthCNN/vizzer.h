@@ -12,6 +12,8 @@ public:
 	void resize(ApplicationData &app);
 
 private:
+    void runNewMistubaScene(ApplicationData &app);
+
     void drawText(ApplicationData &app, vector< string > &text);
 
     AppState state;

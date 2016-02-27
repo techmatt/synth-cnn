@@ -22,6 +22,13 @@ struct ModelInstance
     OBB3f worldBBox;
 };
 
+struct MitsubaOptions
+{
+    float minReflectance;
+    float maxReflectance;
+    bool randomizeMaterialGroups;
+};
+
 struct Scene
 {
     void addArchitecture(AppState &state, const string &architectureName, float scale);

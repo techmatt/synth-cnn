@@ -11,13 +11,19 @@
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="..\common\modelDatabase.cpp">
-      <Filter>databases</Filter>
+      <Filter>synth</Filter>
     </ClCompile>
     <ClCompile Include="..\common\scene.cpp">
-      <Filter>databases</Filter>
+      <Filter>synth</Filter>
     </ClCompile>
     <ClCompile Include="..\common\synthRenderer.cpp">
-      <Filter>databases</Filter>
+      <Filter>synth</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\synthUtil.cpp">
+      <Filter>synth</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\materialDatabase.cpp">
+      <Filter>synth</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -34,23 +40,29 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="..\common\modelDatabase.h">
-      <Filter>databases</Filter>
+      <Filter>synth</Filter>
     </ClInclude>
     <ClInclude Include="..\common\constants.h">
-      <Filter>databases</Filter>
+      <Filter>synth</Filter>
     </ClInclude>
     <ClInclude Include="..\common\scene.h">
-      <Filter>databases</Filter>
+      <Filter>synth</Filter>
     </ClInclude>
     <ClInclude Include="..\common\synthRenderer.h">
-      <Filter>databases</Filter>
+      <Filter>synth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\synthUtil.h">
+      <Filter>synth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\materialDatabase.h">
+      <Filter>synth</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="core">
       <UniqueIdentifier>{e2bd1d1b-f86c-4480-83d1-3568958eea55}</UniqueIdentifier>
     </Filter>
-    <Filter Include="databases">
+    <Filter Include="synth">
       <UniqueIdentifier>{4589d5d0-6688-4d91-bfae-4369fdd4d8b6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

@@ -5,6 +5,7 @@ struct AppState
     Cameraf camera;
 
     ModelDatabase modelDatabase;
+    MaterialDatabase materialDatabase;
 
     Scene activeScene;
     SceneGenerator generator;
@@ -13,6 +14,8 @@ struct AppState
 
     SynthRenderer synthRenderer;
     SynthRenderResult currentRendering;
+
+    RandomImageLoader randomImageLoader;
 
     bool autoGenerateMode;
 };
