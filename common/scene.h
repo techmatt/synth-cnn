@@ -37,7 +37,9 @@ struct Scene
 
     void render(AppState &state, const Cameraf &camera) const;
 
-    void saveMitsuba(const string &filename, const Cameraf &camera) const;
+    void saveMitsuba(AppState &state, const string &filename, const Cameraf &camera) const;
+
+    bool valid(AppState &state) const;
 
     vector<ModelInstance> objects;
     int mainObjectIndex;

@@ -1,0 +1,17 @@
+
+#pretrainedModelSpec=C:\Code\caffe\caffe-windows\matt\data\autoencoder\particles-net.prototxt
+#pretrainedModelParams=C:\Code\caffe\caffe-windows\matt\data\autoencoder\particles_iter_10502.caffemodel
+
+pretrainedModelSpec=C:\Code\caffe\caffe-windows\matt\data\autoencoder\clouds-netA.prototxt
+pretrainedModelParams=C:\Code\caffe\caffe-windows\matt\data\autoencoder\clouds_iter_62284.caffemodel
+
+#pretrainedModelSpec=C:\Code\caffe\caffe-windows\matt\data\autoencoder\fireB-net.prototxt
+#pretrainedModelParams=C:\Code\caffe\caffe-windows\matt\data\autoencoder\fireB_iter_53045.caffemodel
+
+#pretrainedModelSpec=C:\Code\caffe\caffe-windows\matt\data\autoencoder\fireA-net.prototxt
+#pretrainedModelParams=C:\Code\caffe\caffe-windows\matt\data\autoencoder\fireA_iter_9005.caffemodel
+
+#pretrainedModelSpec=C:\Code\caffe\caffe-windows\matt\data\autoencoder\fireBBig-net.prototxt
+#pretrainedModelParams=C:\Code\caffe\caffe-windows\matt\data\autoencoder\fireBBig_iter_685.caffemodel
+
+meanFile=C:\Code\caffe\caffe-windows\matt\data\clouds-mean.binaryproto

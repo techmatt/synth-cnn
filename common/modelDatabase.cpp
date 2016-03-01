@@ -20,6 +20,12 @@ void ModelData::loadModel(GraphicsDevice &graphics) const
     if (meshes.size() > 0)
         return;
 
+    if (util::getFileSize(path) >= 1024 * 1024 * 20)
+    {
+        cout << "Mesh too big" << endl;
+        return;
+    }
+
     MeshDataf meshData;
     MeshIOf::loadFromOBJ(path, meshData);
 
@@ -70,7 +76,6 @@ void ModelCategory::addCSVModel(const string &line)
     const string path = constants::shapeNetRoot + categoryName + "/" + modelName + "/model.obj";
     //if (!util::fileExists(path)) return;
     
-
     const auto partsB = util::split(line, ",\"");
     int upStartIndex = -1;
     for (int i = 0; i < partsB.size(); i++)
@@ -121,9 +126,17 @@ void ModelCategory::addArchitectureModel(const string &architectureName)
 
 void ModelDatabase::init()
 {
-    for (const string &csvFile : Directory::enumerateFiles(constants::shapeNetRoot, ".csv"))
+    //auto categoryList = Directory::enumerateFiles(constants::shapeNetRoot, ".csv");
+
+    auto whitelistedCategories = util::getFileLines(constants::synthCNNRoot + "data/whitelistCategoriesSmall.txt", 3);
+
+    for (auto &s : whitelistedCategories)
     {
-        const string categoryName = util::removeExtensions(csvFile);
+        s = util::split(s, ",")[0];
+    }
+
+    for (const string &categoryName : whitelistedCategories)
+    {
         ModelCategory &category = categories[categoryName];
         category.categoryName = categoryName;
 
@@ -132,7 +145,7 @@ void ModelDatabase::init()
 
         categoryList.push_back(categoryName);
         
-        auto lines = util::getFileLines(constants::shapeNetRoot + csvFile, 3);
+        auto lines = util::getFileLines(constants::shapeNetRoot + categoryName + ".csv", 3);
         for (int lineIndex = 1; lineIndex < lines.size(); lineIndex++)
         {
             category.addCSVModel(lines[lineIndex]);

@@ -57,3 +57,24 @@ ColorImageR8G8B8A8 synthUtil::compositeRandomImage(AppState &state, const ColorI
     }
     return result;
 }
+
+ColorImageR8G8B8A8 synthUtil::decolorize(const ColorImageR8G8B8A8 &image)
+{
+    ColorImageR8G8B8A8 result = image;
+
+    //0.21 R + 0.72 G + 0.07 B
+    vec3f scale(0.21f, 0.72f, 0.07f);
+    scale.x += util::randomUniform(-0.05f, 0.05f);
+    scale.y += util::randomUniform(-0.1f, 0.1f);
+    scale.z += util::randomUniform(-0.03f, 0.2f);
+    scale /= (scale.x + scale.y + scale.z);
+
+    for (auto &p : result)
+    {
+        const float value = vec3f(p.value.getVec3()) | scale;
+        const BYTE b = util::boundToByte(value);
+        p.value = vec4uc(b, b, b, 255);
+    }
+
+    return result;
+}

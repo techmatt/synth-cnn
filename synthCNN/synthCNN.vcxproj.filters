@@ -25,6 +25,9 @@
     <ClCompile Include="..\common\materialDatabase.cpp">
       <Filter>synth</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\environmentDatabase.cpp">
+      <Filter>synth</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="appState.h">
@@ -55,6 +58,9 @@
       <Filter>synth</Filter>
     </ClInclude>
     <ClInclude Include="..\common\materialDatabase.h">
+      <Filter>synth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\environmentDatabase.h">
       <Filter>synth</Filter>
     </ClInclude>
   </ItemGroup>

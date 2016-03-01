@@ -42,4 +42,5 @@ struct synthUtil
     }
 
     static ColorImageR8G8B8A8 compositeRandomImage(AppState &state, const ColorImageR8G8B8A8 &renderedImage, const ColorImageR8G8B8A8 &mask);
+    static ColorImageR8G8B8A8 decolorize(const ColorImageR8G8B8A8 &image);
 };

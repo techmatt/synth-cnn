@@ -44,6 +44,17 @@ void ModelInstance::render(AppState &state, const Cameraf &camera) const
     }
 }
 
+bool Scene::valid(AppState &state) const
+{
+    for (auto &instance : objects)
+    {
+        instance.model->loadModel(*state.graphics);
+        if (instance.model->meshes.size() == 0)
+            return false;
+    }
+    return true;
+}
+
 void Scene::render(AppState &state, const Cameraf &camera) const
 {
     for (auto &instance : objects)
@@ -52,12 +63,13 @@ void Scene::render(AppState &state, const Cameraf &camera) const
     }
 }
 
-void Scene::saveMitsuba(const string &filename, const Cameraf &camera) const
+void Scene::saveMitsuba(AppState &state, const string &filename, const Cameraf &camera) const
 {
     auto r = [](float min, float max) { return util::randomUniform(min, max); };
 
     auto baseLines = util::getFileLines(constants::synthCNNRoot + "data/mitsubaTemplate.txt");
     const auto shapeLines = util::getFileLines(constants::synthCNNRoot + "data/shapeTemplate.txt");
+    const auto wardLines = util::getFileLines(constants::synthCNNRoot + "data/wardTemplate.txt");
     
     auto replaceAll = [](vector<string> &lines, const string &value, const string &replacement)
     {
@@ -68,8 +80,32 @@ void Scene::saveMitsuba(const string &filename, const Cameraf &camera) const
         }
     };
 
+    auto replaceLines = [](const vector<string> &lines, const string &value, const vector<string> &replacement)
+    {
+        vector<string> result;
+        for (const string &line : lines)
+        {
+            if (!util::contains(line, value))
+                result.push_back(line);
+            else
+                for (auto &s : replacement)
+                    result.push_back(s);
+        }
+        return result;
+    };
+
     replaceAll(baseLines, "#LOOKAT#", (camera.getEye() + camera.getLook()).toString(", "));
     replaceAll(baseLines, "#ORIGIN#", camera.getEye().toString(", "));
+
+    for (int env = 0; env <= 0; env++)
+    {
+        const string &exrFilename = util::randomElement(state.environmentDatabase.environments);
+        const string envPrefix = "#ENV_" + to_string(env) + "_";
+        
+        replaceAll(baseLines, envPrefix + "EXR#", exrFilename);
+        replaceAll(baseLines, envPrefix + "ROTATE#", to_string(util::randomUniform(0.0f, 360.0f)));
+        replaceAll(baseLines, envPrefix + "SCALE#", to_string(util::randomUniform(1.0f, 5.0f)));
+    }
     
     for (auto &instance : iterate(objects))
     {
@@ -77,7 +113,10 @@ void Scene::saveMitsuba(const string &filename, const Cameraf &camera) const
         const string objDir = constants::synthCNNRoot + "meshes/" + model.categoryName + "/";
         util::makeDirectory(objDir);
 
-        const vec3f reflectance(r(0.1f, 0.9f), r(0.1f, 0.9f), r(0.1f, 0.9f));
+        const vec3f diffuseOverride(r(0.1f, 0.9f), r(0.1f, 0.9f), r(0.1f, 0.8f));
+        const vec3f specularOverride(r(0.0f, 0.2f), r(0.0f, 0.2f), r(0.0f, 0.2f));
+
+        const auto &randomMaterial = *util::randomElement(state.materialDatabase.materials);
 
         for (auto &m : iterate(model.meshes))
         {
@@ -94,11 +133,22 @@ void Scene::saveMitsuba(const string &filename, const Cameraf &camera) const
             }
 
             auto localShapeLines = shapeLines;
+
+            localShapeLines = replaceLines(localShapeLines, "#BSDF#", wardLines);
+
             replaceAll(localShapeLines, "#FILENAME#", objFilename);
             replaceAll(localShapeLines, "#MATRIX#", instance.value.transform.toString(", "));
             replaceAll(localShapeLines, "#ID#", "o" + to_string(instance.index) + "_m" + to_string(m.index));
-            replaceAll(localShapeLines, "#FLIP#", "false");
-            replaceAll(localShapeLines, "#REFLECTANCE#", reflectance.toString(", "));
+            replaceAll(localShapeLines, "#FLIPNORMALS#", "false");
+            replaceAll(localShapeLines, "#FACENORMALS#", "true");
+            
+            replaceAll(localShapeLines, "#ROUGHNESS#", to_string(randomMaterial.roughness()));
+            
+            //replaceAll(localShapeLines, "#DIFFUSE#", randomMaterial.diffuse().toString(", "));
+            //replaceAll(localShapeLines, "#SPECULAR#", randomMaterial.specular().toString(", "));
+            
+            replaceAll(localShapeLines, "#DIFFUSE#", diffuseOverride.toString(", "));
+            replaceAll(localShapeLines, "#SPECULAR#", specularOverride.toString(", "));
 
             for (auto &s : localShapeLines)
             {

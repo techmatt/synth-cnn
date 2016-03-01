@@ -6,6 +6,9 @@ void Vizzer::init(ApplicationData &app)
     state.graphics = &app.graphics.castD3D11();
     state.renderer.init(app.graphics);
 
+    state.environmentDatabase.init();
+    state.materialDatabase.init();
+
     vec3f eye(0.5f, 0.2f, 0.5f);
     vec3f worldUp(0.0f, 0.0f, 1.0f);
     state.camera = Cameraf(-eye, eye, worldUp, 60.0f, (float)app.window.getWidth() / app.window.getHeight(), 0.01f, 10000.0f);
@@ -21,9 +24,9 @@ void Vizzer::init(ApplicationData &app)
     
     state.randomImageLoader.init();
 
-    state.materialDatabase.init();
-
     state.autoGenerateMode = false;
+
+    state.timingLog.open(constants::synthCNNRoot + "timings.txt", ios::app);
 }
 
 void Vizzer::render(ApplicationData &app)
@@ -93,7 +96,7 @@ void Vizzer::keyDown(ApplicationData &app, UINT key)
         auto mask = synthUtil::makeDownsampledMask(state.currentRendering.occludedObjectColor, 4);
         LodePNG::save(mask, constants::synthCNNRoot + "mask.png");
 
-        state.activeScene.saveMitsuba(constants::synthCNNRoot + "debugScene.xml", state.camera);
+        state.activeScene.saveMitsuba(state, constants::synthCNNRoot + "debugScene.xml", state.camera);
 
         synthUtil::runMitsuba(constants::synthCNNRoot + "debugScene.xml");
 
@@ -111,7 +114,14 @@ void Vizzer::keyDown(ApplicationData &app, UINT key)
 
 void Vizzer::runNewMistubaScene(ApplicationData &app)
 {
+    Timer timer;
     state.activeScene = state.generator.makeRandomScene(state);
+
+    if (!state.activeScene.valid(state))
+    {
+        cout << "Scene not valid" << endl;
+        return;
+    }
 
     if (!state.synthRenderer.goodRandomCamera(state, state.activeScene, state.camera))
     {
@@ -135,14 +145,20 @@ void Vizzer::runNewMistubaScene(ApplicationData &app)
     auto mask = synthUtil::makeDownsampledMask(state.currentRendering.occludedObjectColor, 4);
     LodePNG::save(mask, scenePrefix + "_mask.png");
 
-    state.activeScene.saveMitsuba(scenePrefix + ".xml", state.camera);
+    state.activeScene.saveMitsuba(state, scenePrefix + ".xml", state.camera);
 
     synthUtil::runMitsuba(scenePrefix + ".xml");
 
     const ColorImageR8G8B8A8 renderedImage = LodePNG::load(scenePrefix + ".png");
-
     const ColorImageR8G8B8A8 compositedImage = synthUtil::compositeRandomImage(state, renderedImage, mask);
-    LodePNG::save(compositedImage, scenePrefix + "_comp.png");
+    const ColorImageR8G8B8A8 bwImage = synthUtil::decolorize(compositedImage);
+    
+    LodePNG::save(bwImage, scenePrefix + "_comp.png");
+
+    util::deleteFile(scenePrefix + ".exr");
+    util::deleteFile(scenePrefix + ".png");
+
+    state.timingLog << object.model->categoryName << "," << object.model->modelName << "," << timer.getElapsedTime() << endl;
 }
 
 void Vizzer::keyPressed(ApplicationData &app, UINT key)

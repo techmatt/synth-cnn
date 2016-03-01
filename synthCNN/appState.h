@@ -6,6 +6,7 @@ struct AppState
 
     ModelDatabase modelDatabase;
     MaterialDatabase materialDatabase;
+    EnvironmentDatabase environmentDatabase;
 
     Scene activeScene;
     SceneGenerator generator;
@@ -18,4 +19,6 @@ struct AppState
     RandomImageLoader randomImageLoader;
 
     bool autoGenerateMode;
+
+    ofstream timingLog;
 };

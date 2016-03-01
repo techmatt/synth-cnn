@@ -5,6 +5,7 @@ struct AppState;
 
 #include "../common/constants.h"
 #include "../common/materialDatabase.h"
+#include "../common/environmentDatabase.h"
 #include "../common/modelDatabase.h"
 #include "../common/scene.h"
 #include "../common/synthRenderer.h"
