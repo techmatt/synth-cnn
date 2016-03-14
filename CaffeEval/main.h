@@ -19,7 +19,10 @@ using namespace caffe;  // NOLINT(build/namespaces)
 using namespace google;
 
 #include "../common/constants.h"
-#include "../common/netflixDatabase.h"
+#include "imageDatabase.h"
 
 #include "util.h"
 #include "networkProcessor.h"
+#include "faceProcessor.h"
+
+#include "mLibFreeImage.h"

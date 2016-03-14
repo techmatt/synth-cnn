@@ -22,11 +22,24 @@ void main(int argc, char** argv)
         Caffe::set_mode(Caffe::CPU);
     }
 
-    NetflixDatabase database;
-    database.loadBinary();
+    FaceProcessor face;
+    face.init();
+
+    //ColorImageR8G8B8A8 image;
+    //FreeImageWrapper::loadImage(R"(D:\datasets\VGGFace\ak.png)", image);
+    //vector<float> values = face.process(image);
+
+    face.processAll(R"(D:\datasets\VGGFace\faceTest\)");
+    face.dumpDistanceMatrix(R"(D:\datasets\VGGFace\faceTest\)", R"(D:\datasets\VGGFace\distances.csv)");
+
+    return;
+
+    ImageDatabase database;
+    database.initSynthNet();
 
     NetworkProcessor processor;
     processor.init();
-    processor.evaluateAllUsers(database);
+    processor.evaluateRandomImages(database, DatasetSplit::splitTrain(), 100, constants::synthCNNRoot + "train.csv");
+    processor.evaluateRandomImages(database, DatasetSplit::splitTest(), 100, constants::synthCNNRoot + "test.csv");
     //processor.outputUsers(R"(D:\datasets\Netflix\caffe\results.csv)");
 }

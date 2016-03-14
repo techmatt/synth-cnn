@@ -62,17 +62,6 @@ struct CaffeUtil
         return image;
     }
 
-    static Grid2<float> blobToGridFloat(const Blob<float> &blob, int imageIndex, int channelIndex)
-    {
-        Grid2<float> grid(blob.width(), blob.height());
-        for (auto &p : grid)
-        {
-            const float *dataStart = blob.cpu_data() + blob.offset(imageIndex, channelIndex, p.y, p.x);
-            p.value = *dataStart;
-        }
-        return grid;
-    }
-
     static void loadGrid2IntoBlob(const Grid2<float> &grid, Blobf &blob, int imageIndex, int channelIndex)
     {
         float *cpuPtr = (float*)blob->data()->mutable_cpu_data();
@@ -122,7 +111,7 @@ struct CaffeUtil
 
     static void loadGrid3IntoBlob(const Grid3<float> &grid, Blobf &blob, int imageIndex)
     {
-        //LOG(ERROR) << "dim: " << grid.getDimensions() << ", blob: " << blob->width() << " " << blob->height() << " " << blob->channels();
+        LOG(ERROR) << "dim: " << grid.getDimensions() << ", blob: " << blob->width() << " " << blob->height() << " " << blob->channels();
         float *cpuPtr = (float*)blob->data()->mutable_cpu_data();
         for (int z = 0; z < grid.getDimZ(); z++)
             for (int y = 0; y < grid.getDimY(); y++)

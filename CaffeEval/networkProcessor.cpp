@@ -3,145 +3,87 @@
 
 void NetworkProcessor::init()
 {
-    const string baseDir = R"(D:\datasets\Netflix\caffe\)";
-    const string netFilename = baseDir + "netflix-net-eval.prototxt";
-    const string modelFilename = baseDir + "netflix.caffemodel";
+    const string baseDir = constants::synthCNNRoot + "nets/";
+    const string netFilename = baseDir + "flickr-net-eval.prototxt";
+    const string modelFilename = baseDir + "flickr.caffemodel";
+    const string meanFilename = constants::synthCNNRoot + "databases/synth-mean.binaryproto";
 
+    meanValues = CaffeUtil::gridFromBinaryProto(meanFilename);
+    
     net = Netf(new Net<float>(netFilename, caffe::TEST));
     net->CopyTrainedLayersFrom(modelFilename);
 }
 
 const bool saveNetsMode = false;
 int globalUserIndex = 0;
-double NetworkProcessor::evaluateRating(const NetflixDatabase &database, const Rating &rating)
+vector<float> NetworkProcessor::evaluateImage(const ColorImageR8G8B8A8 &image)
 {
-    Grid3f inputData;
-    const int channelCount = database.movieIndexCount * 3 + 1;
-    vector<BYTE> rawVector(channelCount);
-
-    database.makeLinearFeatures(rating, rawVector.data());
-
-    inputData = Grid3f(1, 1, channelCount);
-    for (auto &c : inputData)
-    {
-        const vec3i coord(c.x, c.y, c.z);
-        const BYTE b = rawVector[c.z];
-
-        const float scale = 1.0f / 255.0f;
-        c.value = ((float)b - 128.0f) * scale;
-    }
+    Grid3f inputData(image.getDimX(), image.getDimY(), 3);
     
-    if (saveNetsMode)
+    for (auto &p : inputData)
     {
-        net->ForwardFrom(0);
-        CaffeUtil::saveNetToDirectory(net, "netBefore" + to_string(globalUserIndex) + "/");
+        const float scale = 1.0f;
+        const float v = image(p.y, p.x)[p.z];
+        p.value = v * scale - meanValues(p.y, p.x, p.z);
     }
-    CaffeUtil::runNetForward(net, "slicer", "data", inputData);
-    if (saveNetsMode) CaffeUtil::saveNetToDirectory(net, "netAfter" + to_string(globalUserIndex) + "/");
+
+    if (saveNetsMode) net->ForwardFrom(0);
+    
+    CaffeUtil::runNetForward(net, "conv1", "data", inputData);
+
+    if (saveNetsMode) CaffeUtil::saveNetToDirectory(net, constants::synthCNNRoot + "netDumps/netAfter" + to_string(globalUserIndex) + "/");
     
     globalUserIndex++;
 
     if (saveNetsMode && globalUserIndex == 6)
         exit(0);
     
-    auto grid = CaffeUtil::getBlobAsGrid(net, "concatFC6");
+    const auto grid = CaffeUtil::getBlobAsGrid(net, "fc8_synth");
     
-    const double baseScore = grid(0, 0, 0) * 255.0 + 128.0;
-    const double score = math::linearMap(0.0, 255.0, 1.0, 5.0, baseScore);
-    const double clampedScore = math::clamp(score, 1.0, 5.0);
-    return clampedScore;
+    const vector<float> result = CaffeUtil::gridToVector(grid);
+    return result;
 }
 
-void NetworkProcessor::evaluateAllUsers(const NetflixDatabase &database, const vector<Rating> &ratings, const string &filename)
+void NetworkProcessor::evaluateRandomImages(const ImageDatabase &database, const DatasetSplit &split, int count, const string &outFilename)
 {
-    ofstream file(filename);
-    file << "user,movie,rating,prediction,error" << endl;
+    ofstream file(outFilename);
 
-    double errorSum = 0.0;
-    int count = 0;
-    int skip = 10000;
-    for (int ratingIndex = 0; ratingIndex < ratings.size(); ratingIndex += skip)
-    {
-        const auto &r = ratings[ratingIndex];
+    file << "index,class,prediction,image";
 
-        double score = evaluateRating(database, r);
-        double error = r.rating - score;
-        
-        errorSum += error * error;
-        count++;
-
-        if (count % 100 == 0)
-            cout << "Rating r=" << (int)r.rating << " p=" << score << " (" << ratingIndex << " / " << ratings.size() << ")" << endl;
-
-        file << r.userID << "," << r.movieIndex << "," << r.rating << "," << score << "," << error << endl;
-    }
-    
-    file << endl << endl;
-    file << "RMSE:," << sqrt(errorSum / (double)count) << endl;
-
-}
-
-void NetworkProcessor::evaluateAllUsers(const NetflixDatabase &database)
-{
-    evaluateAllUsers(database, database.testRatings, constants::netflixDir + "caffe/test.csv");
-    evaluateAllUsers(database, database.trainRatings, constants::netflixDir + "caffe/train.csv");
-}
-/*
-void NetworkProcessor::outputPatients(const string &filename) const
-{
-    ofstream file(filename);
-
-    file << "netoutcome: " << patients[0].netOutcome.size() << endl;
-    
-    file << "index,unstim,stim,status,label,survival time,truth,pred,diff";
-    for (int i = 0; i < constants::survivalIntervals; i++)
-        file << ",i" << i;
+    const int classCount = 14;
+    for (int i = 0; i < classCount; i++)
+        file << ",c" << i;
     file << endl;
 
-    double trainingError = 0.0;
-    int trainingCount = 0;
-    double testError = 0.0;
-    int testCount = 0;
-
-    for (auto &p : patients)
+    for (int i = 0; i < count; i++)
     {
-        ostringstream s;
-        s << p.patient.index;
-        s << "," << p.patient.fileUnstim;
-        s << "," << p.patient.fileStim;
-        s << "," << p.patient.status;
-        s << "," << p.patient.label;
-        s << "," << p.patient.survivalTime;
+        cout << "sample " << i << endl;
 
-        file << s.str();
-        for (auto &v : p.patient.makeOutcomeVector())
-            file << "," << v;
-        file << ",";
-        for (auto &v : p.netOutcome)
-            file << "," << setprecision(3) << v;
-        file << ",";
-        for (int i = 0; i < p.netOutcome.size(); i++)
-            file << "," << setprecision(3) << p.patient.makeOutcomeVector()[i] - p.netOutcome[i];
+        const auto &randomCategory = util::randomElement(database.categories);
+        const auto randomImage = randomCategory.makeRandomSample(split);
+        const auto croppedImage = cropImage(randomImage.first, 227);
+
+        vector<float> result = evaluateImage(croppedImage);
+
+        size_t prediction = util::maxIndex(result);
+
+        file << i << "," << randomCategory.index << "," << prediction << "," << randomImage.second;
+
+        for (int i = 0; i < result.size(); i++)
+            file << "," << result[i];
 
         file << endl;
-
-        double errorSum = 0.0;
-        for (int i = 0; i < p.netOutcome.size(); i++)
-            errorSum += math::abs(p.netOutcome[i] - p.patient.makeOutcomeVector()[i]);
-
-        if (p.test)
-        {
-            testError += errorSum;
-            testCount++;
-        }
-        else
-        {
-            trainingError += errorSum;
-            trainingCount++;
-        }
     }
-
-    file << "Training error," << trainingError / trainingCount << endl;
-    file << "Test error," << testError / testCount << endl;
 }
-*/
+
+ColorImageR8G8B8A8 NetworkProcessor::cropImage(const ColorImageR8G8B8A8 &image, int dim)
+{
+    ColorImageR8G8B8A8 result(dim, dim);
+
+    const vec2i start(14, 14);
+
+    for (auto &p : result)
+        p.value = image(p.x + start.x, p.y + start.y);
+
+    return result;
+}
