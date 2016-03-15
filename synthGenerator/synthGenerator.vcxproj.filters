@@ -1,35 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Core">
-      <UniqueIdentifier>{7d843d09-119e-4cfb-96aa-55d3d4b4ee82}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Netflix">
-      <UniqueIdentifier>{5dac0761-dca7-4702-8829-c134b6bce3f6}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="main.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\constants.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\netflixDatabase.h">
-      <Filter>Netflix</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\imageDatabase.h" />
+    <ClInclude Include="..\common\constants.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="mBase.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="mLibSource.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\netflixDatabase.cpp">
-      <Filter>Netflix</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\imageDatabase.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mLibSource.cpp" />
   </ItemGroup>
 </Project>

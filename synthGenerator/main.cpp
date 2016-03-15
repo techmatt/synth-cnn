@@ -1,17 +1,51 @@
 
 #include "main.h"
 
+struct ImageData
+{
+    Grid3f g0;
+    Grid3f g1;
+};
+
+template<class BinaryDataBuffer, class BinaryDataCompressor>
+inline BinaryDataStream<BinaryDataBuffer, BinaryDataCompressor>& operator<<(BinaryDataStream<BinaryDataBuffer, BinaryDataCompressor>& s, const ImageData &data) {
+    s.writePrimitive(data.g0);
+    s.writePrimitive(data.g1);
+    return s;
+}
+
+template<class BinaryDataBuffer, class BinaryDataCompressor>
+inline BinaryDataStream<BinaryDataBuffer, BinaryDataCompressor>& operator>>(BinaryDataStream<BinaryDataBuffer, BinaryDataCompressor>& s, ImageData &data) {
+    s.readPrimitive(data.g0);
+    s.readPrimitive(data.g1);
+    return s;
+}
+
 void goB()
 {
-    /*NetflixDatabase database;
-    //database.loadText();
-    //database.saveBinary();
-    database.loadBinary();
+    ml::mBase::Writer<ImageData> writer(R"(D:\datasets\ColorNet\mBaseTest\)");
 
-    cout << "movies: " << database.movieIndexCount << endl;
+    ImageData data;
+    data.g0.allocate(1, 1, 1);
+    writer.addRecord(data);
+    data.g0.allocate(2, 2, 2);
+    writer.addRecord(data);
 
-    database.saveLevelDB(constants::netflixDir + "caffe/LevelDBTrain", 1000);
-    database.saveLevelDB(constants::netflixDir + "caffe/LevelDBTest", 1000);*/
+    writer.finalize();
+
+    ml::mBase::Reader<ImageData> reader(R"(D:\datasets\ColorNet\mBaseTest\)", 512);
+
+    ImageData data2;
+    reader.readNextRecord(data2);
+    cout << data2.g0.getDimensions() << endl;
+    reader.readNextRecord(data2);
+    cout << data2.g0.getDimensions() << endl;
+    reader.readNextRecord(data2);
+    cout << data2.g0.getDimensions() << endl;
+    reader.readNextRecord(data2);
+    cout << data2.g0.getDimensions() << endl;
+
+    return;
 
     set<char> trainChars, testChars;
     for (char c = '0'; c <= '9'; c++)
@@ -29,8 +63,8 @@ void goB()
 
     ImageDatabase database;
     database.initSynthNet();
-    database.saveLevelDB(constants::synthLearningDir + "trainSynthDatabase", TestSplit(trainChars), 50000);
-    database.saveLevelDB(constants::synthLearningDir + "testSynthDatabase", TestSplit(testChars), 10000);
+    database.saveLevelDB(constants::synthDatabaseDir + "trainSynthDatabase", TestSplit(trainChars), 200000);
+    database.saveLevelDB(constants::synthDatabaseDir + "testSynthDatabase", TestSplit(testChars), 10000);
 }
 
 void main()

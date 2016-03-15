@@ -5,11 +5,12 @@
 
 #include "mLibCore.h"
 //#include "mLibLodePNG.h"
-//#include "mLibZLib.h"
+#include "mLibZLib.h"
 
 using namespace ml;
 using namespace std;
 
+#include "mBase.h"
+
 #include "../common/constants.h"
-#include "../common/netflixDatabase.h"
 #include "../common/imageDatabase.h"

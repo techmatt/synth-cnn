@@ -10,5 +10,7 @@ namespace constants
     const string randomImagePath = R"(D:\datasets\IndoorCVPR\)";
     const string synthSceneDir = R"(D:\synthCNN\mitsubaScenes\)";
 
+    const string synthDatabaseDir = R"(D:\synthCNN\databases\)";
+
     const float fieldOfView = 44.5513f;
 }
