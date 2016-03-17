@@ -1,7 +1,145 @@
 
 #include "main.h"
 
-void FaceProcessor::dumpDistanceMatrix(const string &folder, const string &filename)
+void FaceProcessor::convertJPGToPNG()
+{
+    /*for (auto &jpgImg : Directory::enumerateFiles(baseDir + "fullImagesJPG/", ".jpg"))
+    {
+    string sourcePath = baseDir + "fullImagesJPG/" + jpgImg;
+    string destPath = util::replace(baseDir + "fullImagesPNG/" + jpgImg, ".jpg", ".png");
+
+    if (!util::fileExists(destPath))
+    {
+    cout << "Converting " << jpgImg << endl;
+    ColorImageR8G8B8A8 img;
+    FreeImageWrapper::loadImage(sourcePath, img);
+    FreeImageWrapper::saveImage(destPath, img);
+    }
+    }*/
+}
+
+void FaceProcessor::evaluateAll(const string &baseDir)
+{
+    loadFeatures(baseDir + "features/");
+    cout << "Evaluating all matches..." << endl;
+    for (auto &f : allFaces)
+    {
+        evaluateMatches(f.second.baseFilename, baseDir);
+    }
+}
+
+void FaceProcessor::evaluateMatches(const string &baseFilename, const string &baseDir)
+{
+    cout << "Evaluating " << baseFilename << endl;
+
+    const string croppedDir = baseDir + "croppedImages/";
+    const string evalDir = baseDir + "evaluation/";
+    util::makeDirectory(evalDir);
+
+    if (allFaces.find(baseFilename) == allFaces.end())
+    {
+        cout << "Face not found: " << baseFilename << endl;
+        return;
+    }
+    FaceEntry &baseEntry = allFaces[baseFilename];
+
+    vector< pair< FaceEntry*, float > > matchScores;
+    for (auto &p : allFaces)
+    {
+        if (p.second.baseFilename != baseFilename)
+        {
+            const float matchDist = compareFaces(baseEntry, p.second);
+            matchScores.push_back(make_pair(&p.second, matchDist));
+        }
+    }
+
+    sort(matchScores.begin(), matchScores.end(), [](const pair< FaceEntry*, float > &a, const pair< FaceEntry*, float > &b) { return a.second < b.second; });
+
+    ofstream csvFile(evalDir + baseFilename + ".csv");
+
+    csvFile << "image,dist" << endl;
+    for (int matchIndex = 0; matchIndex < min(100, (int)matchScores.size()); matchIndex++)
+    {
+        auto &m = matchScores[matchIndex];
+        csvFile << m.first->baseFilename << "," << m.second << endl;
+    }
+
+    ColorImageR8G8B8A8 templateImg = LodePNG::load(baseDir + "template.png");
+
+    const int templateY = 27;
+
+    auto blit = [&](const string &filename, const vec2i &coord) {
+        ColorImageR8G8B8A8 localImg;
+
+        if (util::fileExists(filename))
+        {
+            localImg = LodePNG::load(filename);
+        }
+
+        if (localImg.getWidth() <= 32)
+        {
+            string altFilename = util::replace(filename, "croppedImages", "fullImages");
+            altFilename = util::replace(filename, ".png", ".jpg");
+
+            if (util::fileExists(altFilename))
+            {
+                localImg = LodePNG::load(altFilename);
+            }
+            else
+            {
+                cout << "Failed to find file: " << altFilename << endl;
+            }
+        }
+        localImg.reSample(300, 300);
+
+        //templateImg.copyIntoImage(localImg, coord.x, coord.y);
+        cout << "localImg: " << localImg.getDimensions() << endl;
+        templateImg.copyIntoImage(localImg, 0, 0);
+    };
+
+    blit(croppedDir + baseFilename + ".png", vec2i(3, templateY));
+
+    string swappedFilename = baseFilename;
+    if (util::contains(baseFilename, "fb")) swappedFilename = util::replace(baseFilename, "fb", "gp");
+    else swappedFilename = util::replace(baseFilename, "gp", "fb");
+
+    blit(croppedDir + swappedFilename + ".png", vec2i(332, templateY));
+
+    for (int topK = 0; topK < 5; topK++)
+    {
+        blit(croppedDir + matchScores[topK].first->baseFilename + ".png", vec2i(661 + 301 * topK, templateY));
+    }
+
+    LodePNG::save(templateImg, evalDir + baseFilename + ".png");
+}
+
+void FaceProcessor::loadFeatures(const string &featureFolder)
+{
+    cout << "Loading all features" << endl;
+    for (auto &file : Directory::enumerateFiles(featureFolder, ".dat"))
+    {
+        const auto parts = util::split(file, "_");
+        const string baseFilename = parts[0] + "_" + parts[1];
+        
+        FaceEntry &entry = allFaces[baseFilename];
+        entry.baseFilename = baseFilename;
+
+        vector<float> features;
+        util::deserializeFromFile(featureFolder + file, features);
+
+        if (features.size() != 4096)
+        {
+            cout << "Unexpected feature count: " << features.size() << endl;
+        }
+
+        entry.featureSet.push_back(features);
+
+        if (allFaces.size() >= 1000)
+            return;
+    }
+}
+
+/*void FaceProcessor::dumpDistanceMatrix(const string &folder, const string &filename)
 {
     vector<FaceEntry> faces;
     for (auto &file : Directory::enumerateFilesWithPath(folder, ".dat"))
@@ -33,15 +171,10 @@ void FaceProcessor::dumpDistanceMatrix(const string &folder, const string &filen
         }
         csvFile << endl;
     }
-}
+}*/
 
 void FaceProcessor::init()
 {
-    const string baseDir = constants::synthCNNRoot + "nets/";
-    const string netFilename = baseDir + "flickr-net-eval.prototxt";
-    const string modelFilename = baseDir + "flickr.caffemodel";
-    const string meanFilename = constants::synthCNNRoot + "databases/synth-mean.binaryproto";
-
     meanValue = vec3f(93.5940f, 104.7624f, 129.1863f);
     
     net = Netf(new Net<float>(R"(D:\datasets\VGGFace\VGG_FACE_deploy.prototxt)", caffe::TEST));
@@ -52,37 +185,44 @@ void FaceProcessor::init()
     //WriteProtoToBinaryFile(net_param, model_filename);
 }
 
-void FaceProcessor::processAll(const string &folder)
+void FaceProcessor::processAll(const string &inputImageFolder, const string &outputCroppedFolder, const string &outputFeatureFolder)
 {
-    const float cropSize = 0.8f;
+    util::makeDirectory(outputCroppedFolder);
+    util::makeDirectory(outputFeatureFolder);
 
-    for (auto &file : Directory::enumerateFilesWithPath(folder, ".jpg"))
+    const vector<float> cropSizes = { 0.6f, 0.75f, 0.9f };
+
+    for (auto &inputImageFile : Directory::enumerateFiles(inputImageFolder, ".png"))
     {
-        ColorImageR32G32B32 image;
-        FreeImageWrapper::loadImage(file, image);
-        
-        //FreeImageWrapper::saveImage(util::replace(file, ".jpg", ".png"), image);
-        
-        const vec2f center = vec2f(image.getDimensions()) * 0.5f;
-        const vec2f dim = vec2f(image.getDimensions()) * cropSize;
-        auto croppedImage = image.getSubregion(bbox2i(math::round(center - dim * 0.5f), math::round(center + dim * 0.5f)));
-        croppedImage.reSample(224, 224);
+        const string baseFilename = util::removeExtensions(inputImageFile);
 
-        ColorImageR8G8B8A8 RGBImage(croppedImage.getDimensions());
-        for (auto &p : RGBImage)
+        for (auto &crop : iterate(cropSizes))
         {
-            const vec3f v = croppedImage(p.x, p.y) * 255.0f;
-            p.value = vec4uc(util::boundToByte(v.x),
-                             util::boundToByte(v.y),
-                             util::boundToByte(v.z), 255);
+            const string outputFeatureFile = outputFeatureFolder + baseFilename + "_" + to_string(crop.index) + ".dat";
+            if (util::fileExists(outputFeatureFile))
+                continue;
+
+            ColorImageR8G8B8A8 image = LodePNG::load(inputImageFolder + inputImageFile);
+
+            if (image.getWidth() <= 32 || image.getHeight() <= 32)
+                continue;
+
+            //FreeImageWrapper::saveImage(util::replace(file, ".jpg", ".png"), image);
+
+            const vec2f center = vec2f(image.getDimensions()) * 0.5f;
+            const vec2f dim = vec2f(image.getDimensions()) * crop.value;
+            auto croppedImage = image.getSubregion(bbox2i(math::round(center - dim * 0.5f), math::round(center + dim * 0.5f)));
+
+            croppedImage.reSample(224, 224);
+
+            const vector<float> features = process(croppedImage);
+
+            util::serializeToFile(outputFeatureFile, features);
+
+            //for (auto &p : croppedImage)
+            //    p.value = vec3f(p.value.z, p.value.y, p.value.x);
+            LodePNG::save(croppedImage, outputCroppedFolder + baseFilename + "_" + to_string(crop.index) + ".png");
         }
-        const vector<float> features = process(RGBImage);
-
-        util::serializeToFile(util::replace(file, ".jpg", ".dat"), features);
-
-        for (auto &p : croppedImage)
-            p.value = vec3f(p.value.z, p.value.y, p.value.x);
-        FreeImageWrapper::saveImage(util::replace(file, ".jpg", "_cropped.png"), croppedImage);
     }
 }
 

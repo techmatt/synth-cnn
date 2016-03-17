@@ -33,7 +33,7 @@ void goB()
 
     writer.finalize();
 
-    ml::mBase::Reader<ImageData> reader(R"(D:\datasets\ColorNet\mBaseTest\)", 512);
+    ml::mBase::Reader<ImageData> reader(R"(D:\datasets\ColorNet\mBaseTest\)", 32);
 
     ImageData data2;
     reader.readNextRecord(data2);
@@ -44,6 +44,8 @@ void goB()
     cout << data2.g0.getDimensions() << endl;
     reader.readNextRecord(data2);
     cout << data2.g0.getDimensions() << endl;
+
+    cin.get();
 
     return;
 

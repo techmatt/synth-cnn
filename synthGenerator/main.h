@@ -6,11 +6,10 @@
 #include "mLibCore.h"
 //#include "mLibLodePNG.h"
 #include "mLibZLib.h"
+#include "mLibMBase.h"
 
 using namespace ml;
 using namespace std;
-
-#include "mBase.h"
 
 #include "../common/constants.h"
 #include "../common/imageDatabase.h"

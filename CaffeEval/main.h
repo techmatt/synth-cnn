@@ -23,6 +23,3 @@ using namespace google;
 
 #include "util.h"
 #include "networkProcessor.h"
-#include "faceProcessor.h"
-
-#include "mLibFreeImage.h"

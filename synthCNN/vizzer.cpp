@@ -3,6 +3,10 @@
 
 void Vizzer::init(ApplicationData &app)
 {
+    ColorImageR8G8B8A8 image;
+    FreeImageWrapper::loadImage(R"(D:\datasets\VGGFace\ak.png)", image);
+    FreeImageWrapper::saveImage(R"(D:\datasets\VGGFace\ak2.png)", image);
+
     state.graphics = &app.graphics.castD3D11();
     state.renderer.init(app.graphics);
 

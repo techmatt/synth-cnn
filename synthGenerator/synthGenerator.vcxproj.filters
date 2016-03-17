@@ -4,7 +4,6 @@
     <ClInclude Include="..\common\imageDatabase.h" />
     <ClInclude Include="..\common\constants.h" />
     <ClInclude Include="main.h" />
-    <ClInclude Include="mBase.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\imageDatabase.cpp" />
