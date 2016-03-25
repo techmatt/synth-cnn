@@ -3,12 +3,12 @@
   <ItemGroup>
     <ClInclude Include="main.h" />
     <ClInclude Include="colorNetDatabase.h" />
-    <ClInclude Include="colorUtil.h" />
+    <ClInclude Include="..\common\colorUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mLibSource.cpp" />
     <ClCompile Include="colorNetDatabase.cpp" />
-    <ClCompile Include="colorUtil.cpp" />
+    <ClCompile Include="..\common\colorUtil.cpp" />
   </ItemGroup>
 </Project>

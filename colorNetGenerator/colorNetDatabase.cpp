@@ -5,6 +5,7 @@
 
 const int imageWidth = 256;
 const int imageHeight = 256;
+const float minL = 10.0f;
 
 void ColorNetDatabase::init()
 {
@@ -29,26 +30,34 @@ void ColorNetDatabase::testRandomImages(const string &directory, int imageCount)
     {
         const ColorImageR8G8B8A8 image = randomImage();
 
-        const ColorImageR8G8B8A8 q0 = quantizeImage(image, false);
+        /*const ColorImageR8G8B8A8 q0 = quantizeImage(image, false);
         const ColorImageR8G8B8A8 q1 = quantizeImage(image, true);
 
         const ColorImageR8G8B8A8 c0 = extractChannel(image, 0);
         const ColorImageR8G8B8A8 c1 = extractChannel(image, 1);
-        const ColorImageR8G8B8A8 c2 = extractChannel(image, 2);
+        const ColorImageR8G8B8A8 c2 = extractChannel(image, 2);*/
 
         const string preamble = directory + "i" + to_string(i) + "_";
         FreeImageWrapper::saveImage(preamble + "base.png", image);
-        FreeImageWrapper::saveImage(preamble + "q0.png", q0);
+
+        for (auto &c : iterate(clusters))
+        {
+            const Grid2uc g = computeDensityMap(image, c.value);
+            const ColorImageR8G8B8A8 cImage = colorUtil::toImage(g);
+            FreeImageWrapper::saveImage(preamble + "c" + to_string(c.index) + ".png", cImage);
+        }
+
+        /*FreeImageWrapper::saveImage(preamble + "q0.png", q0);
         FreeImageWrapper::saveImage(preamble + "q1.png", q1);
         FreeImageWrapper::saveImage(preamble + "cL.png", c0);
         FreeImageWrapper::saveImage(preamble + "cA.png", c1);
-        FreeImageWrapper::saveImage(preamble + "cB.png", c2);
+        FreeImageWrapper::saveImage(preamble + "cB.png", c2);*/
     }
 }
 
 void ColorNetDatabase::createDatabase(const string &directory, int sampleCount)
 {
-    const int clusterCount = 32;
+    const int clusterCount = clusters.size();
 
     ml::mBase::Writer<ColorNetEntry> writer(directory);
 
@@ -133,10 +142,14 @@ void ColorNetDatabase::clusterColors(const string &filenameBase, int imageCount,
                 const vec4uc value = image(util::randomInteger(0, image.getWidth() - 1), util::randomInteger(0, image.getHeight() - 1));
                 const vec3f rgb = vec3f(value.getVec3()) / 255.0f;
                 const vec3f lab = converter.RGBToLAB(rgb);
-                labBBox.include(lab);
-                runningAverage += vec3d(lab);
-                runningAverageCount++;
-                allLAB.push_back(vec3f(lab.x * LScale, lab.y * 1.0f, lab.z * 1.0f));
+
+                if (lab.x > minL)
+                {
+                    labBBox.include(lab);
+                    runningAverage += vec3d(lab);
+                    runningAverageCount++;
+                    allLAB.push_back(vec3f(lab.x * LScale, lab.y * 1.0f, lab.z * 1.0f));
+                }
             }
         }
         runningAverage /= (double)runningAverageCount;
@@ -151,24 +164,41 @@ void ColorNetDatabase::clusterColors(const string &filenameBase, int imageCount,
         cout << "Cluster centroids:" << endl;
         for (int i = 0; i < clusterCount; i++)
         {
-            vec3f c = clustering.clusterCenter(i);
-            //c.x /= LScale;
-            c.x = 60.0f;
-            clusterLABCentroids.push_back(c);
+            ClusterInfo c;
+            c.LAB = clustering.clusterCenter(i);
+            c.LAB.x = 60.0f;
+
+            vector<float> dists;
+            for (const auto &p : allLAB)
+            {
+                vec3f LFixed = p;
+                LFixed.x = 60.0f;
+                dists.push_back(computeClusterDist(LFixed, c.LAB));
+            }
+            sort(dists.begin(), dists.end());
+            c.thresholdA = dists[math::round(dists.size() * 0.12f)];
+            c.thresholdB = dists[math::round(dists.size() * 0.14f)];
+
+            clusters.push_back(c);
         }
 
-        sort(clusterLABCentroids.begin(), clusterLABCentroids.end(), [](const vec3f &a, const vec3f &b) { return (a.y) < (b.y); });
+        sort(clusters.begin(), clusters.end(), [](const ClusterInfo &a, const ClusterInfo &b) { return (a.LAB.y) < (b.LAB.y); });
 
-        util::serializeToFilePrimitive(filenameBase + ".dat", clusterLABCentroids);
+        util::serializeToFilePrimitive(filenameBase + ".dat", clusters);
 
-        for (auto &c : clusterLABCentroids)
-            cout << c << endl;
+        cout << "Clusters:" << endl;
+        for (auto &c : clusters)
+            cout << c.LAB << endl;
+
+        cout << "Stats:" << endl;
+        for (auto &c : clusters)
+            cout << c.thresholdA << ", " << c.thresholdB << endl;
 
         const int colorWidth = 16;
         const int totalHeight = 300;
-        ColorImageR8G8B8A8 colorVisualization(colorWidth * clusterLABCentroids.size(), totalHeight);
+        ColorImageR8G8B8A8 colorVisualization(colorWidth * clusterCount, totalHeight);
 
-        for (auto &c : iterate(clusterLABCentroids))
+        for (auto &c : iterate(clusters))
         {
             for (int x = 0; x < colorWidth; x++)
             {
@@ -176,7 +206,7 @@ void ColorNetDatabase::clusterColors(const string &filenameBase, int imageCount,
                 {
                     //const vec3f yuv(y / (totalHeight - 1.0f), c.value.x, c.value.y);
                     //const vec3f rgb = colorUtil::YUVToRGB(yuv);
-                    const vec3f rgb = converter.LABToRGB(vec3f(c.value.x, c.value.y, c.value.z));
+                    const vec3f rgb = converter.LABToRGB(c.value.LAB);
                     colorVisualization((int)c.index * colorWidth + x, y) = colorUtil::makeColor8(rgb);
                 }
             }
@@ -186,7 +216,7 @@ void ColorNetDatabase::clusterColors(const string &filenameBase, int imageCount,
     }
 
     cout << "Loading " << filenameBase << ".dat" << endl;
-    util::deserializeFromFilePrimitive(filenameBase + ".dat", clusterLABCentroids);
+    util::deserializeFromFilePrimitive(filenameBase + ".dat", clusters);
 }
 
 ColorImageR8G8B8A8 ColorNetDatabase::quantizeImage(const ColorImageR8G8B8A8 &image, bool useL) const
@@ -226,6 +256,35 @@ ColorImageR8G8B8A8 ColorNetDatabase::extractChannel(const ColorImageR8G8B8A8 &im
 
         const int v = util::boundToByte(LAB[channelIndex] * 255.0f);
         p.value = vec4uc(v, v, v, 255);
+    }
+    return result;
+}
+
+float ColorNetDatabase::computeClusterDist(const vec3f &LAB0, const vec3f &LAB1)
+{
+    if (LAB0.x < minL || LAB1.x < minL) return 10000.0f;
+    const vec3f flat0(0.0f, LAB0.y * 0.01f, LAB0.z * 0.01f);
+    const vec3f flat1(0.0f, LAB1.y * 0.01f, LAB1.z * 0.01f);
+    return sqrtf(vec3f::distSq(flat0, flat1));
+}
+
+Grid2uc ColorNetDatabase::computeDensityMap(const ColorImageR8G8B8A8 &image, const ClusterInfo &cluster) const
+{
+    const float scale = 0.3f;
+    const float scaleSq = scale * scale;
+
+    Grid2uc result(image.getWidth(), image.getHeight());
+    for (auto &p : image)
+    {
+        const vec3f pLAB = converter.RGBToLAB(colorUtil::makeColor32(p.value));
+
+        const float dist = computeClusterDist(cluster.LAB, pLAB);
+
+        float v;
+        if (dist < cluster.thresholdA) v = 1.0f;
+        else if (dist > cluster.thresholdB) v = 0.0f;
+        else v = math::linearMap(cluster.thresholdA, cluster.thresholdB, 1.0f, 0.0f, dist);
+        result(p.x, p.y) = util::boundToByte(v * 255.0f);
     }
     return result;
 }

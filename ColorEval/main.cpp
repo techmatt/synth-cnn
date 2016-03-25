@@ -3,8 +3,6 @@
 
 void main(int argc, char** argv)
 {
-    ParameterFile params("parameters.txt");
-
     google::InitGoogleLogging(argv[0]);
     
     const bool useGPU = true;
@@ -22,12 +20,19 @@ void main(int argc, char** argv)
         Caffe::set_mode(Caffe::CPU);
     }
     
-    ImageDatabase database;
-    database.initSynthNet();
+    mBase::Reader<ColorNetEntry> reader;
 
-    NetworkProcessor processor;
+    const string baseDir = R"(D:\datasets\ColorNet\data\)";
+    const string databaseDir = baseDir + R"(database\)";
+    reader.init(databaseDir, 24, 12);
+
+    ColorNetEntry entry;
+    reader.readNextRecord(entry);
+    reader.readNextRecord(entry);
+    reader.readNextRecord(entry);
+
+    ColorProcessor processor;
     processor.init();
-    processor.evaluateRandomImages(database, DatasetSplit::splitTrain(), 100, constants::synthCNNRoot + "train.csv");
-    processor.evaluateRandomImages(database, DatasetSplit::splitTest(), 100, constants::synthCNNRoot + "test.csv");
-    //processor.outputUsers(R"(D:\datasets\Netflix\caffe\results.csv)");
+    processor.process(entry);
+    processor.visualize(entry, baseDir + "test");
 }

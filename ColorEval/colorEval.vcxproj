@@ -14,7 +14,7 @@
     <ProjectGuid>{3EFA02D2-1908-4036-9A87-225F8A0982D5}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>datasetProcessor</RootNamespace>
-    <ProjectName>imageEval</ProjectName>
+    <ProjectName>colorEval</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -86,23 +86,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\constants.h" />
-    <ClInclude Include="imageDatabase.h" />
-    <ClInclude Include="main.h" />
-    <ClInclude Include="mLibInclude.h" />
-    <ClInclude Include="networkProcessor.h" />
-    <ClInclude Include="util.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="imageDatabase.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="mLibSource.cpp" />
-    <ClCompile Include="networkProcessor.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="parameters.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="D:\Code\caffe-windows\buildVS2013\caffelib\caffelib.vcxproj">
       <Project>{63a79297-9cc4-4081-adac-7f40ce965c95}</Project>
       <Private>false</Private>
@@ -111,6 +94,20 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\common\colorUtil.h" />
+    <ClInclude Include="colorProcessor.h" />
+    <ClInclude Include="constants.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="mLibInclude.h" />
+    <ClInclude Include="util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\common\colorUtil.cpp" />
+    <ClCompile Include="colorProcessor.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mLibSource.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

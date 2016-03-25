@@ -172,12 +172,14 @@ struct CaffeUtil
     {
         ofstream file(filename);
         file << "dimensions: " << grid.getDimensions() << endl;
-        for (auto &p : grid)
-        {
-            if (p.x == 0)
-                file << endl;
-            file << p.value << " ";
-        }
+        for (int x = 0; x < grid.getDimX(); x++)
+            for (int y = 0; y < grid.getDimY(); y++)
+                for (int z = 0; z < grid.getDimZ(); z++)
+                {
+                    if (z == 0)
+                        file << endl;
+                    file << grid(x, y, z) << " ";
+                }
     }
 
     static void saveNetToDirectory(const Netf &net, const string &dir)

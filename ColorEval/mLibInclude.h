@@ -15,6 +15,8 @@
 
 #include <mLibCore.h>
 #include <mLibLodePNG.h>
+#include <mLibZLib.h>
+#include <mLibmBase.h>
 
 using namespace ml;
 using namespace std;

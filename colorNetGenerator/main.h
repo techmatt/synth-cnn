@@ -11,5 +11,5 @@
 using namespace ml;
 using namespace std;
 
-#include "colorUtil.h"
+#include "../common/colorUtil.h"
 #include "colorNetDatabase.h"

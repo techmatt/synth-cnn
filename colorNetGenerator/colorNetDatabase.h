@@ -37,13 +37,20 @@ inline BinaryDataStream<BinaryDataBuffer, BinaryDataCompressor>& operator>>(Bina
     return s;
 }
 
+struct ClusterInfo
+{
+    vec3f LAB;
+    float thresholdA;
+    float thresholdB;
+};
+
 struct ColorNetDatabase
 {
     ColorImageR8G8B8A8 randomImage() const;
 
     vec3f findClosestCentroid(const vec3f &rgb) const
     {
-        return clusterLABCentroids[findClosestCentroidIndex(rgb)];
+        return clusters[findClosestCentroidIndex(rgb)].LAB;
     }
 
     int findClosestCentroidIndex(const vec3f &rgb) const
@@ -54,9 +61,9 @@ struct ColorNetDatabase
 
         int result = -1;
         float bestDistSq = numeric_limits<float>::max();
-        for (const auto &c : iterate(clusterLABCentroids))
+        for (const auto &c : iterate(clusters))
         {
-            vec3f squashedC = c.value;
+            vec3f squashedC = c.value.LAB;
             squashedC.x *= LScale;
 
             const float distSq = vec3f::distSq(squashedC, squashedLAB);
@@ -75,12 +82,16 @@ struct ColorNetDatabase
 
     void clusterColors(const string &filenameBase, int imageCount, int samplesPerImage, int clusterCount);
 
+    
+
     void createDatabase(const string &directory, int sampleCount);
 
     ColorImageR8G8B8A8 quantizeImage(const ColorImageR8G8B8A8 &image, bool useL) const;
     ColorImageR8G8B8A8 extractChannel(const ColorImageR8G8B8A8 &image, int channelIndex) const;
+    static float computeClusterDist(const vec3f &LAB0, const vec3f &LAB1);
+    Grid2uc computeDensityMap(const ColorImageR8G8B8A8 &image, const ClusterInfo &cluster) const;
     
     ColorConverter converter;
     vector<string> allImageFilenames;
-    vector<vec3f> clusterLABCentroids;
+    vector<ClusterInfo> clusters;
 };

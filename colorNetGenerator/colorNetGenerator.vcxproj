@@ -97,13 +97,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\colorUtil.h" />
     <ClInclude Include="colorNetDatabase.h" />
-    <ClInclude Include="colorUtil.h" />
     <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\colorUtil.cpp" />
     <ClCompile Include="colorNetDatabase.cpp" />
-    <ClCompile Include="colorUtil.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mLibSource.cpp" />
   </ItemGroup>

@@ -8,10 +8,11 @@ void goA()
     database.init();
 
     const string baseDir = R"(D:\datasets\ColorNet\data\)";
-    database.clusterColors(baseDir + "centroids32", 5000, 2000, 32);
+    database.clusterColors(baseDir + "centroids8", 1000, 1000, 8);
     database.testRandomImages(baseDir + "test/", 10);
 
-    database.createDatabase(baseDir + "database/", 1000);
+    return;
+    database.createDatabase(baseDir + "database8c20k/", 1000);
 }
 
 /*struct ImageData
